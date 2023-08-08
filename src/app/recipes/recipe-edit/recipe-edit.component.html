@@ -61,7 +61,7 @@
         </div>
         <div class="col-xs-12">
           <button class="btn btn-success control pull-right" [disabled]="!recipeForm.valid">Save</button>
-          <button class="btn btn-danger control pull-right">Cancel</button>
+          <button class="btn btn-danger control pull-right" (click)="onCancel()">Cancel</button>
         </div>
       </div>
     </form>
