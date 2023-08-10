@@ -61,6 +61,21 @@ export class AuthService {
         this.router.navigate(['/auth']);
     }
 
+    autoLogin() {
+        const userData: {
+            email: string;
+            id: string;
+            _token: string;
+            _tokenExpDate: string;
+        } = JSON.parse(localStorage.getItem('userData')!)
+        if (!userData) return;
+        const loadedUser = new User(userData.email, userData.id, userData._token, new Date(userData._tokenExpDate));
+
+        if (loadedUser.token) {
+            this.user.next(loadedUser);
+        }
+    }
+
     private handleAuth(
         email: string,
         userId: string,
@@ -74,6 +89,7 @@ export class AuthService {
             expDate
         );
         this.user.next(user);
+        localStorage.setItem('userData', JSON.stringify(user));
     }
 
     private handleError(errorRes: HttpErrorResponse) {
