@@ -1,22 +1,28 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { catchError } from "rxjs";
+import { Subject, catchError } from "rxjs";
 import { throwError } from "rxjs";
+import { User } from "./user.model";
+import { tap } from 'rxjs/operators';
 
 export interface AuthResData {
     kind: string;
     idToken: string;
     email: string;
     refreshToken: string;
-    expiredIn: string;
+    expiresIn: string;
     localId: string;
     registered?: boolean
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+
     API_KEY = 'AIzaSyDTPt0I_dnMWZAS4I0Ojcmg4rDl7SBzsg0';
+    user = new Subject<User>();
+
     constructor(private http: HttpClient) { }
+
 
     signup(email: string, password: string) {
         return this.http.post<AuthResData>(
@@ -26,8 +32,15 @@ export class AuthService {
                 password: password,
                 returnSecureToken: true
             }
-        ).pipe(catchError(this.handleError));
+        ).pipe(
+            catchError(this.handleError),
+            tap(resData => {
+                this.handleAuth(resData.email, resData.localId, resData.idToken, +resData.expiresIn)
+            })
+        );
     }
+
+
     login(email: string, password: string) {
         return this.http.post<AuthResData>(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${this.API_KEY}`,
             {
@@ -36,8 +49,29 @@ export class AuthService {
                 returnSecureToken: true
             }
         )
-            .pipe(catchError(this.handleError));
+            .pipe(
+                catchError(this.handleError),
+                tap(resData => {
+                    this.handleAuth(resData.email, resData.localId, resData.idToken, +resData.expiresIn)
+                })
+            );
     }
+
+    private handleAuth(
+        email: string,
+        userId: string,
+        token: string,
+        expiresIn: number) {
+        const expDate = new Date(new Date().getTime() + expiresIn * 1000);
+        const user = new User(
+            email,
+            userId,
+            token,
+            expDate
+        );
+        this.user.next(user);
+    }
+
     private handleError(errorRes: HttpErrorResponse) {
         let errorMessage = 'An unknown error occurred.'
         if (!errorRes.error || !errorRes.error.error) {
