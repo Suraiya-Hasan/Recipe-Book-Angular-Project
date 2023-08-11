@@ -8,6 +8,10 @@ const appRoutes: Routes = [
     {
         path: 'recipes',
         loadChildren: () => import('./recipes/recipes.module').then(x => x.RecipesModule)
+    },
+    {
+        path: 'shopping-list',
+        loadChildren: () => import('./shopping-list/shopping-list.module').then(x => x.ShoppingListModule)
     }
 ]
 
